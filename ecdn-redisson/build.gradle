@@ -1,0 +1,70 @@
+apply plugin: 'java'
+apply plugin: 'eclipse-wtp'
+apply plugin: 'war'
+ 
+sourceCompatibility = 1.8   
+targetCompatibility = 1.8
+ 
+version = '1.0'
+ 
+def version = [
+spring: '4.1.6.RELEASE',
+servletAPI: '3.1.0',
+commonsCollections: '3.2.1',
+junit: '4.12',
+slf4j: '1.7.12',
+redis: '1.8.6.RELEASE',
+jedis: '2.7.3',
+redisson:'3.5.0',
+netty:'4.1.15.Final'
+]
+ 
+eclipse {
+    project.natures "org.springsource.ide.eclipse.gradle.core.nature"
+    wtp {
+        facet {
+            facet name: 'jst.web', version: '3.1'
+            facet name: 'jst.java', version: '1.8'
+        }
+    }
+}
+ 
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Gradle Quickstart',
+                   'Implementation-Version': version
+    }
+}
+ 
+repositories {
+    mavenCentral()
+}
+ 
+dependencies {
+    providedCompile "javax.servlet:javax.servlet-api:${version.servletAPI}"
+     
+    compile "org.springframework:spring-webmvc:${version.spring}"
+    compile "org.slf4j:slf4j-api:${version.slf4j}"
+	compile "org.springframework.data:spring-data-redis:${version.redis}"
+//	compile "redis.clients:jedis:${version.jedis}"
+	compile "org.redisson:redisson:${version.redisson}"
+	compile "io.netty:netty-all:${version.netty}"
+    compile group: 'commons-collections', name: 'commons-collections', version: "${version.commonsCollections}"
+    testCompile group: 'junit', name: 'junit', version: "${version.junit}"
+}
+ 
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+ 
+test {
+    systemProperties 'property': 'value'
+}
+ 
+uploadArchives {
+    repositories {
+       flatDir {
+           dirs 'repos'
+       }
+    }
+}
+
+
