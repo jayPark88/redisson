@@ -1,4 +1,4 @@
-package com.config;
+package com.ecdn.config;
 
 import javax.servlet.Filter;
 
