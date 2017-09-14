@@ -1,29 +1,14 @@
 package com.ecdn.controller;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import org.redisson.Redisson;
-import org.redisson.api.RAtomicLongAsync;
-import org.redisson.api.RBatch;
 import org.redisson.api.RFuture;
-import org.redisson.api.RList;
-import org.redisson.api.RListAsync;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
-//import org.redisson.Redisson;
-//import org.redisson.api.RFuture;
-//import org.redisson.api.RMap;
-//import org.redisson.api.RedissonClient;
-//import org.redisson.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -32,12 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.google.common.collect.Lists;
-import com.lambdaworks.redis.LettuceFutures;
 import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisSentinelAsyncConnection;
-import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisStringAsyncCommands;
@@ -45,7 +26,7 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 
 @Controller
 public class RedisController {
-
+	
 	private static final Logger logger = LoggerFactory.getLogger(RedisController.class);
 	private static long count = 0;
 	long countColcur = 1000;
