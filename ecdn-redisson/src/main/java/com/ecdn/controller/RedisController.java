@@ -149,24 +149,20 @@ public class RedisController {
 		long startTime = System.currentTimeMillis();
 		
 		Random randomGenerator = new Random();
-
 		Map<String, String> hash = new HashMap<String, String>();
-		
-		
-		for (int i = 1; i < 1000000; i++) {
-			int randomInteger = randomGenerator.nextInt(3);
-			for(int k=0; k<randomInteger+1; k++) {
+		for (int i = 1; i < 100001; i++) {
+			for(int k=0; k<randomGenerator.nextInt(3)+1; k++) {
 				hash.put("server"+k, "value"+k);
 			}
-			
 			RedisFuture<String> future = commands.hmset(UUID.randomUUID().toString(), hash);
+			hash= new HashMap<String, String>();
+			System.out.println("wwww : "+hash);
 			future.thenAccept(res -> {
 				count++;
 			});
 		}		
 		while(true){
-			System.out.println("테스트중1 : "+count);
-			if(count==1000000){
+			if(count>=100000){
 				Double endTime = (double) System.currentTimeMillis();
 				Double time = (endTime - startTime);
 				Double wps = (countColcur / time);
