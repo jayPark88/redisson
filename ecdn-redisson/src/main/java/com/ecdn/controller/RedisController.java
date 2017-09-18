@@ -5,12 +5,12 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import org.redisson.Redisson;
+import org.redisson.api.RBucket;
+import org.redisson.api.RBucketAsync;
 import org.redisson.api.RFuture;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,11 +23,11 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.async.RedisStringAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 
 @Controller
 public class RedisController {
 	
-	private static final Logger logger = LoggerFactory.getLogger(RedisController.class);
 	private static long count = 0;
 	long countColcur = 1000;
 
@@ -70,7 +70,7 @@ public class RedisController {
 		System.out.println("count :" + count);
 		System.out.println("time :" + (endTime - startTime)/(double)1000);
 		System.out.println("wps :" + 1000/((endTime - startTime)/(double)1000));
-
+		
 		return "home";
 	}
 	
@@ -127,13 +127,13 @@ public class RedisController {
 				.addSentinelAddress("redis://13.124.163.100:26379").setPassword("dbfrhrfh1rk!").setTimeout(30000);
 
 		RedissonClient redisson = Redisson.create(config);
-		RMap<String, String> map = redisson.getMap(UUID.randomUUID().toString());
-
+		RMap<String, String> map = redisson.getMap("jaypark1");
+		
 		long startTime = System.currentTimeMillis();
 		long count = 0;
 
 		for (int i = 1; i <= 1000; i++) {
-			map.get("test");
+			map.get("field1");
 			count = i;
 		}
 		long endTime =  System.currentTimeMillis();
@@ -155,17 +155,20 @@ public class RedisController {
 		RedisCommands<String, String> commands = connection.sync();
 
 		// perform a series of independent calls
-		long startTime = System.currentTimeMillis();
+		Double startTime = (double) System.currentTimeMillis();
 		long count = 0;
 		
-		for (int i = 1; i <= 1000; i++) {
-			commands.get("test");
+		for (int i = 1; i <= 950; i++) {
+			commands.hget("jaypark1", "field1");
+			//get("jaypark1");
 			count = i;
 		}
-		long endTime = System.currentTimeMillis();
+		Double endTime = (double) System.currentTimeMillis();
+		Double time = (endTime - startTime);
+		Double wps = (count / time);
 		System.out.println("count :" + count);
-		System.out.println("time :" + (endTime - startTime)/(double)1000);
-		System.out.println("wps :" + 1000/((endTime - startTime)/(double)1000));
+		System.out.println("time :" + time);
+		System.out.println("wps :" + wps * 1000);
 
 		// later
 		connection.close();
@@ -185,21 +188,23 @@ public class RedisController {
 
 		RedissonClient client = Redisson.create(config);
 		//Async test area start
-		RMap<Object, Object> server1List = client.getMap("settings_server1");
+		RMap<Object, Object> map = client.getMap("jaypark1");
 
 		long startTime = System.currentTimeMillis();
-		for (int i = 1; i <= 1000; i++) {
-			RFuture<Object> val1 = server1List.getAsync(server1List.get("name"));
+		for (int i = 1; i < 1001; i++) {
+			RFuture<Object> val1 = map.getAsync("field1");
 			val1.thenAccept(res -> {
+				System.out.println("?? : "+res);
 				count++;
 			});
 		}
 		while(true){
+			System.out.println("테스트중 : "+count);
 			if(count==1000){
 				Double endTime = (double) System.currentTimeMillis();
 				Double time = (endTime - startTime);
 				Double wps = (countColcur / time);
-				System.out.println("count :" + countColcur);
+				System.out.println("count :" + count);
 				System.out.println("time :" + time);
 				System.out.println("wps :" + wps * 1000);
 				break;
@@ -217,25 +222,26 @@ public class RedisController {
 				"redis-sentinel://dbfrhrfh1rk!@13.124.239.130:26379,dbfrhrfh1rk!@13.124.160.180:26379,dbfrhrfh1rk!@13.124.163.100:26379/0#mymaster");
 
 		StatefulRedisConnection<String, String> connection = client.connect();
-		RedisStringAsyncCommands<String, String> async = connection.async();
+		//RedisStringAsyncCommands<String, String> async = connection.async();
+        RedisAsyncCommands<String, String>asyncCommands = connection.async();
 
 		// perform a series of independent calls
 		long startTime = System.currentTimeMillis();
 		
-		for (int i = 0; i <= 1000; i++) {
-			RedisFuture<String> future = async.get("test");
+		for (int i = 1; i < 1001; i++) {
+			
+			RedisFuture<String> future = asyncCommands.hget("jaypark1", "field1");
 			future.thenAccept(res -> {
-				System.out.println(res);
-				System.out.println(count);
 				count++;
 			});
 		}
 		while(true){
+			System.out.println("테스트중 : "+count);
 			if(count==1000){
 				Double endTime = (double) System.currentTimeMillis();
 				Double time = (endTime - startTime);
 				Double wps = (countColcur / time);
-				System.out.println("count :" + countColcur);
+				System.out.println("count :" + count);
 				System.out.println("time :" + time);
 				System.out.println("wps :" + wps * 1000);
 				break;
@@ -359,4 +365,72 @@ public class RedisController {
 
 		return "lettuce";
 	}
+	
+	//test Area
+	@RequestMapping(value = "/lettuceHashingWriteAsync", method = RequestMethod.GET)
+	public String lettuceHashingWriteAsync(String jedisKey, String jedisValue, Model model)
+			throws InterruptedException, ExecutionException {
+
+		RedisClient redisClient = RedisClient.create(
+				"redis-sentinel://dbfrhrfh1rk!@13.124.239.130:26379,dbfrhrfh1rk!@13.124.160.180:26379,dbfrhrfh1rk!@13.124.163.100:26379/0#mymaster");
+
+		StatefulRedisConnection<String, String> connection = redisClient.connect();
+		RedisAsyncCommands<String, String> commands = connection.async();
+
+		// perform a series of independent calls
+		List<RedisFuture<?>> futures = Lists.newArrayList();
+		long startTime = System.currentTimeMillis();
+		
+		for (int i = 61000001; i < 62000001; i++) {
+			RedisFuture<Boolean> future = commands.hset("jaypark"+i, "field"+i, "value"+i);
+			future.thenAccept(res -> {
+				count++;
+			});
+		}		
+		while(true){
+			System.out.println("테스트중1 : "+count);
+			if(count==1000000){
+				Double endTime = (double) System.currentTimeMillis();
+				Double time = (endTime - startTime);
+				Double wps = (countColcur / time);
+				System.out.println("count :" + count);
+				System.out.println("time :" + time);
+				System.out.println("wps :" + wps * 1000);
+				break;
+			}
+		}
+
+		// later
+		connection.close();
+
+		System.out.println("complete!!!");
+		System.out.println("Connected to Redis using Redis Sentinel");
+
+		return "lettuce";
+	}
+	//test Area
+	
+	//test Area
+		@RequestMapping(value = "/lettuceHashingDeleteSync", method = RequestMethod.GET)
+		public String lettuceHashingDeleteSync(String jedisKey, String jedisValue, Model model)
+				throws InterruptedException, ExecutionException {
+
+			RedisClient redisClient = RedisClient.create(
+					"redis-sentinel://dbfrhrfh1rk!@13.124.239.130:26379,dbfrhrfh1rk!@13.124.160.180:26379,dbfrhrfh1rk!@13.124.163.100:26379/0#mymaster");
+
+			StatefulRedisConnection<String, String> connection = redisClient.connect();
+			for (int i = 1; i < 1001; i++) {
+				connection.sync().flushall();
+				
+			}
+			//connection.sync().flushall();
+			// later
+			connection.close();
+
+			System.out.println("complete!!!");
+			System.out.println("Connected to Redis using Redis Sentinel");
+
+			return "lettuce";
+		}
+		//test Area
 }
