@@ -1,6 +1,7 @@
 package com.ecdn.controller;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -228,18 +229,20 @@ public class RedisController {
 		
 		Random randomGenerator = new Random();
 		count = 0;
-		for (int i = 4500001; i <= 5000000; i++) {			
+		for (int i = 1; i <= 5; i++) {			
 			String hashKeySection = String.valueOf(i/100);
 			String uuid = UUID.randomUUID().toString();
 			
 			RedisFuture<Boolean> future = commands.hset(hashKeySection, uuid, "server"+randomGenerator.nextInt(3));
 			ArrayList<String> arraylist = new ArrayList<String>();
+			
 			int random =randomGenerator.nextInt(3)+1;
 			
 			for(int k=0; k<=random; k++) {	
 				arraylist.add("server"+k);
+				
 				if(k==random) {
-					future = commands.hset(hashKeySection, uuid, arraylist.toString());
+					future = commands.hset(hashKeySection, uuid, arraylist.toString().replaceAll("\\[|\\]|[,][ ]","\t"));
 				}
 			}
 			
@@ -253,7 +256,7 @@ public class RedisController {
 		}		
 		while(true){
 			logger.info(""+count);
-			if(count==500000){				
+			if(count==5){				
 				Double endTime = (double) System.currentTimeMillis();
 				Double time = (endTime - startTime);
 				Double wps = (countColcur / time);
